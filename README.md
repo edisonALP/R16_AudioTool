@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>🎛️ R16 Metafinder — BZS Stem Tool</h1>
+  <h1>🎛️ R16 Stem Tool</h1>
   <p><b>The ultimate FL Studio companion tool for producers and beatmakers.</b></p>
   
   ![Python](https://img.shields.io/badge/Python-3.8%2B-blue?style=flat-square&logo=python)
