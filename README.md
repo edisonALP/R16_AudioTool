@@ -11,7 +11,7 @@
 
 ## 🎵 Overview
 
-**R16 Metafinder** (BZS Stem Tool) is a lightweight, cross-platform desktop application designed to streamline the workflow of music producers. It automatically analyzes your exported audio stems, detects their **Key** and **BPM**, and effortlessly renames them by baking the metadata directly into the filename.
+**Stem Tool**  is a lightweight, cross-platform desktop application designed to streamline the workflow of music producers. It automatically analyzes your exported audio stems, detects their **Key** and **BPM**, and effortlessly renames them by baking the metadata directly into the filename.
 
 **Before:**
 `Melody_Loop.wav`  
