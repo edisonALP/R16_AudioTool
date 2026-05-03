@@ -119,5 +119,5 @@ This tool relies on powerful open-source libraries for audio processing and GUI 
 ---
 
 <div align="center">
-  <p>Made with ❤️ by <b>BZS / @beatsexuell</b></p>
+  <p>Made with ❤️ by <b>R16</b></p>
 </div>
