@@ -8,8 +8,9 @@ from PyQt5.QtCore import Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QDropEvent, QDragEnterEvent, QColor, QPixmap
 
 from src.analyzer import analyze_file
-from src.renamer import build_filename, rename_file
+from src.renamer import build_filename, rename_file, parse_filename
 from src.styles import DARK
+from src.pattern_bar import NamingPatternBar
 
 SUPPORTED = {'.wav', '.mp3', '.flac', '.aiff', '.aif', '.ogg'}
 
@@ -191,7 +192,7 @@ class DropZone(QLabel):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("BZS Stem Tool")
+        self.setWindowTitle("R16 StemTool")
         self.setMinimumSize(960, 620)
         self.setStyleSheet(DARK)
         self._file_paths: dict = {}
@@ -218,7 +219,7 @@ class MainWindow(QMainWindow):
             header.addWidget(logo_label)
             header.addSpacing(10)
 
-        title = QLabel("BZS STEM TOOL")
+        title = QLabel("R16 STEMTOOL")
         title.setObjectName("title")
         sub = QLabel("Key · BPM · Metadata Renamer")
         sub.setObjectName("subtitle")
@@ -246,6 +247,11 @@ class MainWindow(QMainWindow):
         self.drop_zone.setFixedHeight(78)
         self.drop_zone.files_dropped.connect(self._load_files)
         layout.addWidget(self.drop_zone)
+
+        # ── Naming Pattern Bar ──────────────────────────────────────────
+        self.pattern_bar = NamingPatternBar()
+        self.pattern_bar.pattern_changed.connect(self._update_all_previews)
+        layout.addWidget(self.pattern_bar)
 
         # ── Table ───────────────────────────────────────────────────────
         self.table = QTableWidget(0, 5)
@@ -367,7 +373,8 @@ class MainWindow(QMainWindow):
         if path is None:
             return
         _, ext = os.path.splitext(path)
-        stem_name = os.path.splitext(os.path.basename(path))[0]
+        raw_stem = os.path.splitext(os.path.basename(path))[0]
+        stem_name = parse_filename(raw_stem)['clean_name']
 
         key    = self.table.item(row, COL_KEY).text()
         bpm_t  = self.table.item(row, COL_BPM).text()
@@ -379,8 +386,11 @@ class MainWindow(QMainWindow):
         except ValueError:
             bpm = 0
 
-        new_name = build_filename(stem_name, key, bpm, tag, ext)
+        pattern = self.pattern_bar.current_pattern()
+        new_name = build_filename(stem_name, key, bpm, tag, ext, pattern)
         self.table.item(row, COL_PREVIEW).setText(new_name)
+        if row == 0:
+            self.pattern_bar.update_preview(new_name)
 
     def _update_all_previews(self):
         self.table.blockSignals(True)
