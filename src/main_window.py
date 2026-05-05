@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import (
     QProgressBar, QHeaderView, QAbstractItemView, QMessageBox, QFrame
 )
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
-from PyQt5.QtGui import QDropEvent, QDragEnterEvent, QColor
+from PyQt5.QtGui import QDropEvent, QDragEnterEvent, QColor, QPixmap
 
 from src.analyzer import analyze_file
 from src.renamer import build_filename, rename_file
@@ -52,7 +52,7 @@ class StatusBar(QWidget):
         self.label = QLabel("Ready.")
         self.label.setStyleSheet("color: #666; font-size: 11px;")
         self.pct_label = QLabel("")
-        self.pct_label.setStyleSheet("color: #ff6b00; font-size: 11px; font-weight: bold;")
+        self.pct_label.setStyleSheet("color: #cc0000; font-size: 11px; font-weight: bold;")
         self.pct_label.setAlignment(Qt.AlignRight)
         row.addWidget(self.label)
         row.addWidget(self.pct_label)
@@ -69,7 +69,7 @@ class StatusBar(QWidget):
             }
             QProgressBar::chunk {
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #ff6b00, stop:1 #ff9944);
+                    stop:0 #cc0000, stop:1 #e60000);
                 border-radius: 4px;
             }
         """)
@@ -136,7 +136,7 @@ class DropZone(QLabel):
                 background: #1c1c1c;
             }
             QLabel:hover {
-                border-color: #ff6b00;
+                border-color: #cc0000;
                 color: #777;
                 background: #202020;
             }
@@ -146,12 +146,12 @@ class DropZone(QLabel):
         self.setText("Release to load files")
         self.setStyleSheet("""
             QLabel {
-                border: 2px dashed #ff6b00;
+                border: 2px dashed #cc0000;
                 border-radius: 8px;
-                color: #ff6b00;
+                color: #cc0000;
                 font-size: 13px;
                 padding: 28px;
-                background: #201810;
+                background: #1e0808;
             }
         """)
 
@@ -208,6 +208,16 @@ class MainWindow(QMainWindow):
 
         # ── Header ──────────────────────────────────────────────────────
         header = QHBoxLayout()
+
+        logo_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'assets', 'logomascott.png')
+        if os.path.exists(logo_path):
+            logo_label = QLabel()
+            pix = QPixmap(logo_path).scaledToHeight(48, Qt.SmoothTransformation)
+            logo_label.setPixmap(pix)
+            logo_label.setFixedSize(pix.width(), 48)
+            header.addWidget(logo_label)
+            header.addSpacing(10)
+
         title = QLabel("BZS STEM TOOL")
         title.setObjectName("title")
         sub = QLabel("Key · BPM · Metadata Renamer")
@@ -332,7 +342,7 @@ class MainWindow(QMainWindow):
 
             prev_item = QTableWidgetItem("")
             prev_item.setFlags(prev_item.flags() & ~Qt.ItemIsEditable)
-            prev_item.setForeground(QColor("#ff6b00"))
+            prev_item.setForeground(QColor("#cc0000"))
 
             self.table.setItem(row, COL_ORIG,    orig)
             self.table.setItem(row, COL_KEY,     key_item)

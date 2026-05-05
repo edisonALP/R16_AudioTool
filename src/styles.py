@@ -9,7 +9,7 @@ QMainWindow, QWidget {
 QLabel#title {
     font-size: 22px;
     font-weight: bold;
-    color: #ff6b00;
+    color: #cc0000;
     letter-spacing: 1px;
 }
 
@@ -38,7 +38,7 @@ QTableWidget {
     border: 1px solid #333;
     border-radius: 4px;
     gridline-color: #2e2e2e;
-    selection-background-color: #ff6b0044;
+    selection-background-color: #cc000044;
     selection-color: #fff;
 }
 
@@ -48,7 +48,7 @@ QTableWidget::item {
 }
 
 QTableWidget::item:selected {
-    background-color: #ff6b0033;
+    background-color: #cc000033;
     color: #fff;
 }
 
@@ -76,33 +76,33 @@ QPushButton {
 
 QPushButton:hover {
     background-color: #333;
-    border-color: #ff6b00;
+    border-color: #cc0000;
     color: #fff;
 }
 
 QPushButton:pressed {
-    background-color: #ff6b00;
+    background-color: #cc0000;
     color: #fff;
-    border-color: #ff6b00;
+    border-color: #cc0000;
 }
 
 QPushButton#primary {
-    background-color: #ff6b00;
+    background-color: #cc0000;
     color: #fff;
     border: none;
     font-weight: bold;
 }
 
 QPushButton#primary:hover {
-    background-color: #ff8533;
+    background-color: #e60000;
 }
 
 QPushButton#primary:pressed {
-    background-color: #cc5500;
+    background-color: #aa0000;
 }
 
 QPushButton#primary:disabled {
-    background-color: #4a3020;
+    background-color: #3a0a0a;
     color: #666;
 }
 
@@ -121,7 +121,7 @@ QLineEdit {
 }
 
 QLineEdit:focus {
-    border-color: #ff6b00;
+    border-color: #cc0000;
 }
 
 QProgressBar {
@@ -134,7 +134,7 @@ QProgressBar {
 }
 
 QProgressBar::chunk {
-    background-color: #ff6b00;
+    background-color: #cc0000;
     border-radius: 3px;
 }
 
