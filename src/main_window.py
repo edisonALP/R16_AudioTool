@@ -212,10 +212,13 @@ class MainWindow(QMainWindow):
 
         logo_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'assets', 'logomascott.png')
         if os.path.exists(logo_path):
+            from PyQt5.QtWidgets import QApplication
+            dpr = QApplication.primaryScreen().devicePixelRatio()
             logo_label = QLabel()
-            pix = QPixmap(logo_path).scaledToHeight(48, Qt.SmoothTransformation)
+            pix = QPixmap(logo_path).scaledToHeight(int(48 * dpr), Qt.SmoothTransformation)
+            pix.setDevicePixelRatio(dpr)
             logo_label.setPixmap(pix)
-            logo_label.setFixedSize(pix.width(), 48)
+            logo_label.setFixedSize(int(pix.width() / dpr), 48)
             header.addWidget(logo_label)
             header.addSpacing(10)
 
