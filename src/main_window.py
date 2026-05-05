@@ -7,7 +7,7 @@ from PyQt5.QtWidgets import (
     QProgressBar, QHeaderView, QAbstractItemView, QMessageBox, QFrame
 )
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
-from PyQt5.QtGui import QDropEvent, QDragEnterEvent, QColor, QPixmap, QFontDatabase
+from PyQt5.QtGui import QDropEvent, QDragEnterEvent, QColor, QPixmap, QFontDatabase, QPainter, QPen
 
 from src.analyzer import analyze_file
 from src.renamer import build_filename, rename_file, parse_filename
@@ -192,6 +192,88 @@ class DropZone(QLabel):
         return files
 
 
+class ToolNav(QWidget):
+    """Horizontal tool navigation bar with active + coming-soon tabs."""
+
+    _TOOLS = [
+        ("File Renamer", True),
+        ("Stem Separation", False),
+        ("Audio Analysis", False),
+        ("Restoration", False),
+    ]
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setFixedHeight(46)
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(4)
+
+        for name, active in self._TOOLS:
+            btn = self._make_tab(name, active)
+            layout.addWidget(btn)
+
+        layout.addStretch()
+
+    def _make_tab(self, name: str, active: bool) -> QWidget:
+        container = QWidget()
+        container.setFixedHeight(46)
+        vbox = QVBoxLayout(container)
+        vbox.setContentsMargins(0, 0, 0, 0)
+        vbox.setSpacing(0)
+
+        btn = QPushButton(name)
+        btn.setFixedHeight(32)
+        btn.setCursor(Qt.PointingHandCursor if active else Qt.ForbiddenCursor)
+        btn.setEnabled(active)
+
+        if active:
+            btn.setStyleSheet("""
+                QPushButton {
+                    background: transparent;
+                    border: none;
+                    border-bottom: 2px solid #cc0000;
+                    color: #ffffff;
+                    font-size: 13px;
+                    font-weight: 600;
+                    padding: 4px 14px;
+                    border-radius: 0;
+                }
+            """)
+        else:
+            btn.setStyleSheet("""
+                QPushButton {
+                    background: transparent;
+                    border: none;
+                    border-bottom: 2px solid transparent;
+                    color: #444;
+                    font-size: 13px;
+                    padding: 4px 14px;
+                    border-radius: 0;
+                }
+                QPushButton:disabled {
+                    background: transparent;
+                    color: #444;
+                    border-color: transparent;
+                }
+            """)
+
+        vbox.addWidget(btn)
+
+        if not active:
+            soon = QLabel("Coming Soon")
+            soon.setAlignment(Qt.AlignCenter)
+            soon.setStyleSheet("color: #cc0000; font-size: 9px; font-weight: 600; letter-spacing: 0.5px;")
+            soon.setFixedHeight(12)
+            vbox.addWidget(soon)
+        else:
+            spacer = QLabel("")
+            spacer.setFixedHeight(12)
+            vbox.addWidget(spacer)
+
+        return container
+
+
 def _load_fonts():
     assets = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'assets')
     for fname in ("Inter-Regular.ttf", "Inter-SemiBold.ttf", "Inter-Bold.ttf"):
@@ -205,7 +287,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         _load_fonts()
         self.setWindowTitle("R16 AudioTool")
-        self.setMinimumSize(960, 620)
+        self.setMinimumSize(720, 520)
         self.setStyleSheet(DARK)
         self._file_paths: dict = {}
         self._worker = None
@@ -241,6 +323,17 @@ class MainWindow(QMainWindow):
         header.addWidget(title)
         header.addStretch()
         layout.addLayout(header)
+
+        # ── Tool Nav ─────────────────────────────────────────────────────
+        self.tool_nav = ToolNav()
+        layout.addWidget(self.tool_nav)
+
+        # separator line
+        sep = QFrame()
+        sep.setFrameShape(QFrame.HLine)
+        sep.setFixedHeight(1)
+        sep.setStyleSheet("background: #2a2a2a; border: none;")
+        layout.addWidget(sep)
 
         # ── Drop zone ───────────────────────────────────────────────────
         self.drop_zone = DropZone()

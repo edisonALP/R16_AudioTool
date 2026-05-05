@@ -1,10 +1,69 @@
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-    QPushButton, QLineEdit, QFrame,
+    QPushButton, QLineEdit, QFrame, QLayout, QSizePolicy,
 )
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSignal, QRect, QSize, QPoint
 
 from src import settings as sett
+
+
+class FlowLayout(QLayout):
+    """Wrapping horizontal layout — chips flow to next line when row is full."""
+
+    def __init__(self, parent=None, h_spacing=4, v_spacing=4):
+        super().__init__(parent)
+        self._items = []
+        self._h = h_spacing
+        self._v = v_spacing
+
+    def addItem(self, item):
+        self._items.append(item)
+
+    def count(self):
+        return len(self._items)
+
+    def itemAt(self, index):
+        return self._items[index] if 0 <= index < len(self._items) else None
+
+    def takeAt(self, index):
+        return self._items.pop(index) if 0 <= index < len(self._items) else None
+
+    def hasHeightForWidth(self):
+        return True
+
+    def heightForWidth(self, width):
+        return self._layout(QRect(0, 0, width, 0), dry=True)
+
+    def setGeometry(self, rect):
+        super().setGeometry(rect)
+        self._layout(rect, dry=False)
+
+    def sizeHint(self):
+        return self.minimumSize()
+
+    def minimumSize(self):
+        size = QSize()
+        for item in self._items:
+            size = size.expandedTo(item.minimumSize())
+        m = self.contentsMargins()
+        return size + QSize(m.left() + m.right(), m.top() + m.bottom())
+
+    def _layout(self, rect, dry):
+        m = self.contentsMargins()
+        r = rect.adjusted(m.left(), m.top(), -m.right(), -m.bottom())
+        x, y, line_h = r.x(), r.y(), 0
+        for item in self._items:
+            w = item.sizeHint().width()
+            h = item.sizeHint().height()
+            if x + w > r.right() and line_h > 0:
+                x = r.x()
+                y += line_h + self._v
+                line_h = 0
+            if not dry:
+                item.setGeometry(QRect(QPoint(x, y), item.sizeHint()))
+            x += w + self._h
+            line_h = max(line_h, h)
+        return y + line_h - rect.y() + m.bottom()
 
 PRESET_TAGS = [
     "analog", "don", "wavy", "ambient", "melodic", "drill", "trap",
@@ -75,10 +134,8 @@ class NamingSection(QWidget):
         body_layout.addWidget(tags_lbl)
 
         self._chips_widget = QWidget()
-        self._chips_layout = QHBoxLayout(self._chips_widget)
-        self._chips_layout.setContentsMargins(0, 0, 0, 0)
-        self._chips_layout.setSpacing(4)
-        self._chips_layout.addStretch()
+        self._chips_widget.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+        self._chips_layout = FlowLayout(self._chips_widget, h_spacing=4, v_spacing=4)
         body_layout.addWidget(self._chips_widget)
 
         # ── Active tag order row (shown when ≥2 tags active) ─────────
@@ -142,7 +199,7 @@ class NamingSection(QWidget):
     # ── Style tag logic ─────────────────────────────────────────────────
 
     def _rebuild_chips(self):
-        while self._chips_layout.count() > 1:
+        while self._chips_layout.count():
             item = self._chips_layout.takeAt(0)
             if item.widget():
                 item.widget().deleteLater()
@@ -155,7 +212,7 @@ class NamingSection(QWidget):
         for tag in all_tags:
             chip = self._make_chip(tag, active=tag in self._active_tags,
                                    is_custom=tag in self._custom_tags)
-            self._chips_layout.insertWidget(self._chips_layout.count() - 1, chip)
+            self._chips_layout.addWidget(chip)
 
         self._rebuild_order()
 
