@@ -2,17 +2,57 @@ import os
 import re
 
 
-def build_filename(stem_name: str, key: str, bpm: float, tag: str, ext: str) -> str:
-    bpm_str = f"{int(bpm)}BPM" if bpm == int(bpm) else f"{bpm}BPM"
-    parts = [stem_name]
+_PAT_TAG = re.compile(r'@(\w+?)(?=[\s@]|$)')
+_PAT_BPM = re.compile(r'\b(\d{2,3})\s*(?:BPM|bpm)\b')
+_PAT_KEY = re.compile(r'\b([A-Ga-g][#b]?(?:maj|min))(?=[\s_\-.]|$)')
+
+
+def parse_filename(stem: str) -> dict:
+    """Extract tag, bpm, key from stem name. Returns cleaned name with tokens removed."""
+    tag_m = _PAT_TAG.search(stem)
+    bpm_m = _PAT_BPM.search(stem)
+    key_m = _PAT_KEY.search(stem)
+
+    tag = tag_m.group(1) if tag_m else None
+    bpm = float(bpm_m.group(1)) if bpm_m else None
+    key = key_m.group(1) if key_m else None
+
+    # Normalize key to title case (e.g. D#min, Gmaj)
     if key:
-        parts.append(key)
-    if bpm:
-        parts.append(bpm_str)
-    if tag:
-        parts.append(tag)
-    name = '_'.join(parts)
-    # sanitize
+        key = key[0].upper() + key[1:]
+
+    clean = stem
+    for pat in (_PAT_TAG, _PAT_BPM, _PAT_KEY):
+        clean = pat.sub('', clean)
+    clean = re.sub(r'[\s_\-]+', ' ', clean).strip(' _-')
+
+    return {'tag': tag, 'bpm': bpm, 'key': key, 'clean_name': clean}
+
+
+def build_filename(
+    clean_name: str,
+    key: str,
+    bpm: float,
+    tag: str,
+    ext: str,
+    pattern: list[tuple[str, str]],
+) -> str:
+    bpm_val = int(bpm) if bpm and bpm == int(bpm) else bpm
+
+    def resolve(token_id: str, suffix: str) -> str:
+        if token_id == "name":
+            return clean_name or ""
+        if token_id == "key":
+            return (key + suffix) if key else ""
+        if token_id in ("bpm", "bpm_raw"):
+            return (str(bpm_val) + suffix) if bpm_val else ""
+        if token_id == "tag":
+            return (tag + suffix) if tag else ""
+        return ""
+
+    parts = [resolve(tid, sfx) for tid, sfx in pattern]
+    parts = [p for p in parts if p]
+    name = "_".join(parts)
     name = re.sub(r'[<>:"/\\|?*]', '', name)
     return name + ext
 

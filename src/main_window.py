@@ -5,11 +5,12 @@ from PyQt5.QtWidgets import (
     QProgressBar, QHeaderView, QAbstractItemView, QMessageBox, QFrame
 )
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
-from PyQt5.QtGui import QDropEvent, QDragEnterEvent, QColor
+from PyQt5.QtGui import QDropEvent, QDragEnterEvent, QColor, QPixmap
 
 from src.analyzer import analyze_file
-from src.renamer import build_filename, rename_file
+from src.renamer import build_filename, rename_file, parse_filename
 from src.styles import DARK
+from src.pattern_bar import NamingPatternBar
 
 SUPPORTED = {'.wav', '.mp3', '.flac', '.aiff', '.aif', '.ogg'}
 
@@ -52,7 +53,7 @@ class StatusBar(QWidget):
         self.label = QLabel("Ready.")
         self.label.setStyleSheet("color: #666; font-size: 11px;")
         self.pct_label = QLabel("")
-        self.pct_label.setStyleSheet("color: #ff6b00; font-size: 11px; font-weight: bold;")
+        self.pct_label.setStyleSheet("color: #cc0000; font-size: 11px; font-weight: bold;")
         self.pct_label.setAlignment(Qt.AlignRight)
         row.addWidget(self.label)
         row.addWidget(self.pct_label)
@@ -69,7 +70,7 @@ class StatusBar(QWidget):
             }
             QProgressBar::chunk {
                 background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #ff6b00, stop:1 #ff9944);
+                    stop:0 #cc0000, stop:1 #e60000);
                 border-radius: 4px;
             }
         """)
@@ -136,7 +137,7 @@ class DropZone(QLabel):
                 background: #1c1c1c;
             }
             QLabel:hover {
-                border-color: #ff6b00;
+                border-color: #cc0000;
                 color: #777;
                 background: #202020;
             }
@@ -146,12 +147,12 @@ class DropZone(QLabel):
         self.setText("Release to load files")
         self.setStyleSheet("""
             QLabel {
-                border: 2px dashed #ff6b00;
+                border: 2px dashed #cc0000;
                 border-radius: 8px;
-                color: #ff6b00;
+                color: #cc0000;
                 font-size: 13px;
                 padding: 28px;
-                background: #201810;
+                background: #1e0808;
             }
         """)
 
@@ -191,7 +192,7 @@ class DropZone(QLabel):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("BZS Stem Tool")
+        self.setWindowTitle("R16 AudioTool")
         self.setMinimumSize(960, 620)
         self.setStyleSheet(DARK)
         self._file_paths: dict = {}
@@ -208,7 +209,20 @@ class MainWindow(QMainWindow):
 
         # ── Header ──────────────────────────────────────────────────────
         header = QHBoxLayout()
-        title = QLabel("BZS STEM TOOL")
+
+        logo_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'assets', 'logomascott.png')
+        if os.path.exists(logo_path):
+            from PyQt5.QtWidgets import QApplication
+            dpr = QApplication.primaryScreen().devicePixelRatio()
+            logo_label = QLabel()
+            pix = QPixmap(logo_path).scaledToHeight(int(48 * dpr), Qt.SmoothTransformation)
+            pix.setDevicePixelRatio(dpr)
+            logo_label.setPixmap(pix)
+            logo_label.setFixedSize(int(pix.width() / dpr), 48)
+            header.addWidget(logo_label)
+            header.addSpacing(10)
+
+        title = QLabel("R16 AUDIOTOOL")
         title.setObjectName("title")
         sub = QLabel("Key · BPM · Metadata Renamer")
         sub.setObjectName("subtitle")
@@ -236,6 +250,11 @@ class MainWindow(QMainWindow):
         self.drop_zone.setFixedHeight(78)
         self.drop_zone.files_dropped.connect(self._load_files)
         layout.addWidget(self.drop_zone)
+
+        # ── Naming Pattern Bar ──────────────────────────────────────────
+        self.pattern_bar = NamingPatternBar()
+        self.pattern_bar.pattern_changed.connect(self._update_all_previews)
+        layout.addWidget(self.pattern_bar)
 
         # ── Table ───────────────────────────────────────────────────────
         self.table = QTableWidget(0, 5)
@@ -332,7 +351,7 @@ class MainWindow(QMainWindow):
 
             prev_item = QTableWidgetItem("")
             prev_item.setFlags(prev_item.flags() & ~Qt.ItemIsEditable)
-            prev_item.setForeground(QColor("#ff6b00"))
+            prev_item.setForeground(QColor("#cc0000"))
 
             self.table.setItem(row, COL_ORIG,    orig)
             self.table.setItem(row, COL_KEY,     key_item)
@@ -357,7 +376,8 @@ class MainWindow(QMainWindow):
         if path is None:
             return
         _, ext = os.path.splitext(path)
-        stem_name = os.path.splitext(os.path.basename(path))[0]
+        raw_stem = os.path.splitext(os.path.basename(path))[0]
+        stem_name = parse_filename(raw_stem)['clean_name']
 
         key    = self.table.item(row, COL_KEY).text()
         bpm_t  = self.table.item(row, COL_BPM).text()
@@ -369,8 +389,11 @@ class MainWindow(QMainWindow):
         except ValueError:
             bpm = 0
 
-        new_name = build_filename(stem_name, key, bpm, tag, ext)
+        pattern = self.pattern_bar.current_pattern()
+        new_name = build_filename(stem_name, key, bpm, tag, ext, pattern)
         self.table.item(row, COL_PREVIEW).setText(new_name)
+        if row == 0:
+            self.pattern_bar.update_preview(new_name)
 
     def _update_all_previews(self):
         self.table.blockSignals(True)

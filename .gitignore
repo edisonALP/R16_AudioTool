@@ -11,3 +11,5 @@ Thumbs.db
 *.wav.tmp
 .claude/
 test/
+docs/superpowers/
+sampleaudio/
