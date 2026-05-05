@@ -11,6 +11,7 @@ from src.analyzer import analyze_file
 from src.renamer import build_filename, rename_file, parse_filename
 from src.styles import DARK
 from src.pattern_bar import NamingPatternBar
+from src.naming_section import NamingSection
 
 SUPPORTED = {'.wav', '.mp3', '.flac', '.aiff', '.aif', '.ogg'}
 
@@ -198,6 +199,8 @@ class MainWindow(QMainWindow):
         self._file_paths: dict = {}
         self._worker = None
         self._analyzed = 0
+        self._style_tags: list = []
+        self._producers: list = []
         self._build_ui()
 
     def _build_ui(self):
@@ -250,6 +253,11 @@ class MainWindow(QMainWindow):
         self.drop_zone.setFixedHeight(78)
         self.drop_zone.files_dropped.connect(self._load_files)
         layout.addWidget(self.drop_zone)
+
+        # ── Naming Section ──────────────────────────────────────────────────
+        self.naming_section = NamingSection()
+        self.naming_section.naming_changed.connect(self._on_naming_changed)
+        layout.addWidget(self.naming_section)
 
         # ── Naming Pattern Bar ──────────────────────────────────────────
         self.pattern_bar = NamingPatternBar()
@@ -327,12 +335,19 @@ class MainWindow(QMainWindow):
             self.status.error("No supported audio files found.")
             return
 
+        # Deduplicate: skip files already loaded
+        existing = set(self._file_paths.values())
+        paths = [p for p in paths if p not in existing]
+        if not paths:
+            self.status.error("All dropped files already loaded.")
+            return
+
         self.status.start(len(paths), f"Loading {len(paths)} file(s)...")
-        self.table.setRowCount(0)
-        self._file_paths.clear()
+        start_row = self.table.rowCount()
 
         self.table.blockSignals(True)
-        for row, path in enumerate(paths):
+        for i, path in enumerate(paths):
+            row = start_row + i
             self.table.insertRow(row)
             self._file_paths[row] = path
 
@@ -359,7 +374,7 @@ class MainWindow(QMainWindow):
             self.table.setItem(row, COL_TAG,     tag_item)
             self.table.setItem(row, COL_PREVIEW, prev_item)
 
-            self.status.update(row + 1, f"Loading {row + 1} / {len(paths)}")
+            self.status.update(i + 1, f"Loading {i + 1} / {len(paths)}")
 
         self.table.blockSignals(False)
         self._update_all_previews()
@@ -390,12 +405,24 @@ class MainWindow(QMainWindow):
             bpm = 0
 
         pattern = self.pattern_bar.current_pattern()
-        new_name = build_filename(stem_name, key, bpm, tag, ext, pattern)
+        new_name = build_filename(
+            stem_name, key, bpm, tag, ext, pattern,
+            style_tags=self._style_tags,
+            producers=self._producers,
+        )
         self.table.item(row, COL_PREVIEW).setText(new_name)
         if row == 0:
             self.pattern_bar.update_preview(new_name)
 
+    def _on_naming_changed(self, style_tags: list, producers: list):
+        self._style_tags = style_tags
+        self._producers = producers
+        self._update_all_previews()
+
     def _update_all_previews(self):
+        if hasattr(self, 'naming_section'):
+            self._style_tags = self.naming_section.style_tags()
+            self._producers = self.naming_section.producers()
         self.table.blockSignals(True)
         global_tag = self.tag_input.text()
         for row in range(self.table.rowCount()):
