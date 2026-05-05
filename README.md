@@ -32,6 +32,8 @@
 - 🎹 **Advanced Key Detection:** Krumhansl-Schmuckler algorithm via `chroma_cens` for accurate key detection, robust against complex timbres.
 - 🥁 **Smart BPM Detection:** Tempogram analysis tailored for Trap, Drill, and syncopated beats.
 - 🏷️ **Flexible Naming Patterns:** Choose from built-in platform presets or build a custom token sequence — no typing required.
+- 🎨 **Style Tags:** One-click genre/vibe tags (trap, drill, phonk, ambient…) embed directly into filenames via the `[Tags]` token.
+- 👥 **Multi-Producer Credits:** Add up to 3 producer names — automatically formatted as `@Name1_@Name2` in the filename.
 - 🖱️ **Drag & Drop Workflow:** Drop entire folders or individual stems directly into the app.
 - ✏️ **Editable Metadata:** Review and correct Key, BPM, and Producer Tag before committing changes.
 - 👀 **Live Preview:** Instantly see the new filenames as you adjust settings.
@@ -50,9 +52,10 @@ R16 AudioTool ships with platform-specific presets. Click **▶ Naming Pattern**
 | **Splice** | `tag_name_bpm_key` | `BZS_drain_120_C#min.wav` |
 | **Looperman** | `name_bpmbpm_key` | `drain_120bpm_C#min.wav` |
 | **Minimal** | `name_key_bpm` | `drain_C#min_120.wav` |
+| **Loop Pool** | `[tags]_name_bpmbpm_@producers` | `[trap, dark]_drain_120bpm_@BZS.wav` |
 | **Custom** | your choice | any order |
 
-Available tokens: `Name` · `Key` · `BPM` · `BPM#` (plain number) · `Tag`
+Available tokens: `Name` · `Key` · `BPM` · `BPM#` (plain number) · `bpm` (lowercase) · `(BPM)` · `Tag` · `[Tags]` · `@Producers`
 
 ---
 
@@ -89,8 +92,8 @@ python main.py
 1. **Export Stems:** *File → Export → Wave file → Split mixer tracks*
 2. **Import:** Drag & drop your stem folder into R16 AudioTool
 3. **Choose Pattern:** Click **▶ Naming Pattern** and pick a preset (e.g. Splice)
-4. **Analyze:** Click **"Analyze All"** to detect Key and BPM
-5. **Tag:** Enter your **Producer Tag** — applies to all stems
+4. **Style & Credits:** Click **▶ Style Tags & Producers** — pick genre tags, enter producer name(s)
+5. **Analyze:** Click **"Analyze All"** to detect Key and BPM
 6. **Review:** Double-click any cell to correct values
 7. **Rename:** Click **"Rename All Files"**
 
@@ -120,6 +123,7 @@ python main.py
     ├── renamer.py       # Filename building and renaming
     ├── presets.py       # Naming pattern preset definitions
     ├── pattern_bar.py   # Collapsible naming pattern UI widget
+    ├── naming_section.py# Style tags + multi-producer credits widget
     ├── main_window.py   # Main GUI
     └── styles.py        # Dark theme stylesheet
 ```

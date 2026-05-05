@@ -1,11 +1,13 @@
 import os
+import re
+import shutil
 from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
     QLabel, QLineEdit, QTableWidget, QTableWidgetItem, QFileDialog,
     QProgressBar, QHeaderView, QAbstractItemView, QMessageBox, QFrame
 )
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
-from PyQt5.QtGui import QDropEvent, QDragEnterEvent, QColor, QPixmap
+from PyQt5.QtGui import QDropEvent, QDragEnterEvent, QColor, QPixmap, QFontDatabase
 
 from src.analyzer import analyze_file
 from src.renamer import build_filename, rename_file, parse_filename
@@ -190,9 +192,18 @@ class DropZone(QLabel):
         return files
 
 
+def _load_fonts():
+    assets = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'assets')
+    for fname in ("Inter-Regular.ttf", "Inter-SemiBold.ttf", "Inter-Bold.ttf"):
+        path = os.path.join(assets, fname)
+        if os.path.exists(path):
+            QFontDatabase.addApplicationFont(path)
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        _load_fonts()
         self.setWindowTitle("R16 AudioTool")
         self.setMinimumSize(960, 620)
         self.setStyleSheet(DARK)
@@ -227,25 +238,8 @@ class MainWindow(QMainWindow):
 
         title = QLabel("R16 AUDIOTOOL")
         title.setObjectName("title")
-        sub = QLabel("Key · BPM · Metadata Renamer")
-        sub.setObjectName("subtitle")
-        sub.setAlignment(Qt.AlignBottom)
         header.addWidget(title)
-        header.addSpacing(10)
-        header.addWidget(sub)
         header.addStretch()
-
-        tag_box = QHBoxLayout()
-        tag_box.setSpacing(6)
-        lbl = QLabel("Producer Tag:")
-        lbl.setStyleSheet("color: #888;")
-        self.tag_input = QLineEdit()
-        self.tag_input.setPlaceholderText("e.g. BZS")
-        self.tag_input.setFixedWidth(180)
-        self.tag_input.textChanged.connect(self._update_all_previews)
-        tag_box.addWidget(lbl)
-        tag_box.addWidget(self.tag_input)
-        header.addLayout(tag_box)
         layout.addLayout(header)
 
         # ── Drop zone ───────────────────────────────────────────────────
@@ -361,7 +355,7 @@ class MainWindow(QMainWindow):
             key_item.setTextAlignment(Qt.AlignCenter)
             bpm_item  = QTableWidgetItem("—")
             bpm_item.setTextAlignment(Qt.AlignCenter)
-            tag_item  = QTableWidgetItem(self.tag_input.text())
+            tag_item  = QTableWidgetItem(self._producers[0] if self._producers else "")
             tag_item.setTextAlignment(Qt.AlignCenter)
 
             prev_item = QTableWidgetItem("")
@@ -404,6 +398,14 @@ class MainWindow(QMainWindow):
         except ValueError:
             bpm = 0
 
+        if bpm:
+            bpm_str = str(int(bpm)) if bpm == int(bpm) else str(bpm)
+            stem_name = re.sub(
+                rf'(?<![a-zA-Z\d]){re.escape(bpm_str)}(?![a-zA-Z\d])',
+                '', stem_name,
+            )
+            stem_name = re.sub(r'[\s_\-]+', ' ', stem_name).strip(' _-')
+
         pattern = self.pattern_bar.current_pattern()
         new_name = build_filename(
             stem_name, key, bpm, tag, ext, pattern,
@@ -424,7 +426,7 @@ class MainWindow(QMainWindow):
             self._style_tags = self.naming_section.style_tags()
             self._producers = self.naming_section.producers()
         self.table.blockSignals(True)
-        global_tag = self.tag_input.text()
+        global_tag = self._producers[0] if self._producers else ""
         for row in range(self.table.rowCount()):
             tag_cell = self.table.item(row, COL_TAG)
             if tag_cell is not None:
@@ -487,11 +489,27 @@ class MainWindow(QMainWindow):
 
         reply = QMessageBox.question(
             self, "Rename Files",
-            f"Rename {n} file(s) on disk?\nThis cannot be easily undone.",
+            f"Rename {n} file(s) on disk?\n\nOriginals werden in '_originals' gesichert.",
             QMessageBox.Yes | QMessageBox.Cancel
         )
         if reply != QMessageBox.Yes:
             return
+
+        # Back up originals before any rename
+        backed_up_dirs: set[str] = set()
+        for row in range(n):
+            old_path = self._file_paths.get(row)
+            if not old_path or not os.path.exists(old_path):
+                continue
+            directory = os.path.dirname(old_path)
+            backup_dir = os.path.join(directory, "_originals")
+            if backup_dir not in backed_up_dirs:
+                os.makedirs(backup_dir, exist_ok=True)
+                backed_up_dirs.add(backup_dir)
+            try:
+                shutil.copy2(old_path, os.path.join(backup_dir, os.path.basename(old_path)))
+            except Exception:
+                pass  # non-fatal — rename proceeds regardless
 
         self.status.start(n, "Renaming...")
         errors = []
@@ -511,11 +529,12 @@ class MainWindow(QMainWindow):
                 errors.append(f"{os.path.basename(old_path)}: {e}")
             self.status.update(row + 1, f"Renaming {row + 1} / {n} ...")
 
+        backup_note = "  ·  Backup in '_originals'" if backed_up_dirs else ""
         if errors:
             self.status.error(f"{renamed} renamed, {len(errors)} failed.")
             QMessageBox.warning(self, "Some files failed", "\n".join(errors))
         else:
-            self.status.done(f"Done — {renamed} file(s) renamed.")
+            self.status.done(f"Done — {renamed} file(s) renamed.{backup_note}")
 
     # ── Helpers ─────────────────────────────────────────────────────────
     def _clear(self):

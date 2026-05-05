@@ -2,13 +2,14 @@ DARK = """
 QMainWindow, QWidget {
     background-color: #1a1a1a;
     color: #e0e0e0;
-    font-family: 'Segoe UI', Arial, sans-serif;
+    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
     font-size: 13px;
 }
 
 QLabel#title {
     font-size: 22px;
-    font-weight: bold;
+    font-weight: 700;
+    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
     color: #cc0000;
     letter-spacing: 1px;
 }

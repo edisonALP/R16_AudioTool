@@ -14,6 +14,12 @@ PRESET_TAGS = [
 
 MAX_PRODUCERS = 3
 
+_BTN_SMALL = (
+    "QPushButton { background: #2a2a2a; color: #666; border: 1px solid #444;"
+    " border-radius: 3px; font-size: 11px; padding: 0; }"
+    "QPushButton:hover { background: #3a0808; color: #cc4444; border-color: #cc4444; }"
+)
+
 
 class NamingSection(QWidget):
     naming_changed = pyqtSignal(list, list)  # style_tags, producers
@@ -74,6 +80,19 @@ class NamingSection(QWidget):
         self._chips_layout.setSpacing(4)
         self._chips_layout.addStretch()
         body_layout.addWidget(self._chips_widget)
+
+        # ── Active tag order row (shown when ≥2 tags active) ─────────
+        self._order_widget = QWidget()
+        self._order_layout = QHBoxLayout(self._order_widget)
+        self._order_layout.setContentsMargins(0, 0, 0, 0)
+        self._order_layout.setSpacing(3)
+        order_lbl = QLabel("Order:")
+        order_lbl.setStyleSheet("color: #555; font-size: 11px;")
+        order_lbl.setFixedWidth(38)
+        self._order_layout.addWidget(order_lbl)
+        self._order_layout.addStretch()
+        self._order_widget.setVisible(False)
+        body_layout.addWidget(self._order_widget)
 
         add_row = QHBoxLayout()
         add_row.setSpacing(6)
@@ -138,6 +157,8 @@ class NamingSection(QWidget):
                                    is_custom=tag in self._custom_tags)
             self._chips_layout.insertWidget(self._chips_layout.count() - 1, chip)
 
+        self._rebuild_order()
+
     def _make_chip(self, tag: str, active: bool, is_custom: bool) -> QPushButton:
         label = f"● {tag}  ×" if is_custom else tag
         btn = QPushButton(label)
@@ -163,6 +184,7 @@ class NamingSection(QWidget):
             self._active_tags.append(tag)
         elif not checked and tag in self._active_tags:
             self._active_tags.remove(tag)
+        self._rebuild_order()
         self._emit()
 
     def _remove_custom_tag(self, tag: str):
@@ -183,6 +205,60 @@ class NamingSection(QWidget):
         self._tag_input.clear()
         self._rebuild_chips()
         self._emit()
+
+    # ── Active tag ordering ──────────────────────────────────────────────
+
+    def _rebuild_order(self):
+        # Remove all widgets after the "Order:" label (index 0)
+        while self._order_layout.count() > 2:
+            item = self._order_layout.takeAt(1)
+            if item.widget():
+                item.widget().deleteLater()
+
+        if len(self._active_tags) < 2:
+            self._order_widget.setVisible(False)
+            return
+
+        self._order_widget.setVisible(True)
+        for i, tag in enumerate(self._active_tags):
+            pill = QWidget()
+            row = QHBoxLayout(pill)
+            row.setContentsMargins(0, 0, 0, 0)
+            row.setSpacing(1)
+
+            if i > 0:
+                lb = QPushButton("←")
+                lb.setFixedSize(16, 20)
+                lb.setStyleSheet(_BTN_SMALL)
+                lb.clicked.connect(lambda _, idx=i: self._move_tag(idx, -1))
+                row.addWidget(lb)
+
+            lbl = QLabel(tag)
+            lbl.setStyleSheet(
+                "QLabel { color: #cc0000; background: #2a0808; border: 1px solid #5a0000;"
+                " border-radius: 3px; padding: 0 5px; font-size: 11px; }"
+            )
+            lbl.setFixedHeight(20)
+            row.addWidget(lbl)
+
+            if i < len(self._active_tags) - 1:
+                rb = QPushButton("→")
+                rb.setFixedSize(16, 20)
+                rb.setStyleSheet(_BTN_SMALL)
+                rb.clicked.connect(lambda _, idx=i: self._move_tag(idx, 1))
+                row.addWidget(rb)
+
+            # insert before the trailing stretch (last item)
+            self._order_layout.insertWidget(self._order_layout.count() - 1, pill)
+
+    def _move_tag(self, idx: int, direction: int):
+        new_idx = idx + direction
+        if 0 <= new_idx < len(self._active_tags):
+            self._active_tags[idx], self._active_tags[new_idx] = (
+                self._active_tags[new_idx], self._active_tags[idx]
+            )
+            self._rebuild_order()
+            self._emit()
 
     # ── Producer logic ───────────────────────────────────────────────────
 
@@ -207,6 +283,13 @@ class NamingSection(QWidget):
         self._rebuild_producers()
         self._emit()
 
+    def _remove_producer(self, inp: QLineEdit):
+        if len(self._producer_inputs) <= 1:
+            return
+        self._producer_inputs.remove(inp)
+        self._rebuild_producers()
+        self._emit()
+
     def _rebuild_producers(self):
         while self._prod_inner.count():
             item = self._prod_inner.takeAt(0)
@@ -221,6 +304,14 @@ class NamingSection(QWidget):
             at.setFixedWidth(14)
             self._prod_inner.addWidget(at)
             self._prod_inner.addWidget(inp)
+
+            if len(self._producer_inputs) > 1:
+                del_btn = QPushButton("×")
+                del_btn.setFixedSize(20, 20)
+                del_btn.setStyleSheet(_BTN_SMALL)
+                del_btn.clicked.connect(lambda _, i=inp: self._remove_producer(i))
+                self._prod_inner.addWidget(del_btn)
+            self._prod_inner.addSpacing(6)
 
         self._prod_inner.addWidget(self._add_prod_btn)
         self._prod_inner.addStretch()

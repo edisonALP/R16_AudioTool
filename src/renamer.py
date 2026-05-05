@@ -3,7 +3,7 @@ import re
 
 
 _PAT_TAG = re.compile(r'@(\w+?)(?=[\s@]|$)')
-_PAT_BPM = re.compile(r'\b(\d{2,3})\s*(?:BPM|bpm)\b')
+_PAT_BPM = re.compile(r'(?<![a-zA-Z\d])(\d{2,3})\s*(?:BPM|bpm)(?![a-zA-Z\d])')
 _PAT_KEY = re.compile(r'\b([A-Ga-g][#b]?(?:maj|min))(?=[\s_\-.]|$)')
 
 
