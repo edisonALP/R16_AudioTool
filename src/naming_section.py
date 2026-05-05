@@ -141,8 +141,6 @@ class NamingSection(QWidget):
     def _make_chip(self, tag: str, active: bool, is_custom: bool) -> QPushButton:
         label = f"● {tag}  ×" if is_custom else tag
         btn = QPushButton(label)
-        btn.setCheckable(True)
-        btn.setChecked(active)
         btn.setFixedHeight(24)
         btn.setStyleSheet(
             "QPushButton { background: #2a2a2a; color: #666; border: 1px solid #383838;"
@@ -151,9 +149,13 @@ class NamingSection(QWidget):
             " border-color: #cc0000; }"
             "QPushButton:hover { color: #aaa; }"
         )
-        btn.toggled.connect(lambda checked, t=tag: self._on_chip_toggled(t, checked))
         if is_custom:
-            btn.setContextMenuPolicy(0)
+            btn.setCheckable(False)
+            btn.clicked.connect(lambda _, t=tag: self._remove_custom_tag(t))
+        else:
+            btn.setCheckable(True)
+            btn.setChecked(active)
+            btn.toggled.connect(lambda checked, t=tag: self._on_chip_toggled(t, checked))
         return btn
 
     def _on_chip_toggled(self, tag: str, checked: bool):
@@ -161,6 +163,14 @@ class NamingSection(QWidget):
             self._active_tags.append(tag)
         elif not checked and tag in self._active_tags:
             self._active_tags.remove(tag)
+        self._emit()
+
+    def _remove_custom_tag(self, tag: str):
+        if tag in self._custom_tags:
+            self._custom_tags.remove(tag)
+        if tag in self._active_tags:
+            self._active_tags.remove(tag)
+        self._rebuild_chips()
         self._emit()
 
     def _add_custom_tag(self):
