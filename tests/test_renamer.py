@@ -116,3 +116,73 @@ def test_build_custom_pattern():
     pattern = [("key", ""), ("name", ""), ("tag", "")]
     name = build_filename("loop", "Amin", 120.0, "BZS", ".wav", pattern)
     assert name == "Amin_loop_BZS.wav"
+
+
+# --- New token tests ---
+
+def test_build_style_tags_token():
+    pattern = [("style_tags", ""), ("name", "")]
+    name = build_filename("beat", "", 0, "", ".wav", pattern,
+                          style_tags=["analog", "wavy"])
+    assert name == "[analog, wavy]_beat.wav"
+
+
+def test_build_style_tags_empty():
+    pattern = [("style_tags", ""), ("name", "")]
+    name = build_filename("beat", "", 0, "", ".wav", pattern, style_tags=[])
+    assert name == "beat.wav"
+
+
+def test_build_style_tags_strips_blank_entries():
+    pattern = [("style_tags", ""), ("name", "")]
+    name = build_filename("beat", "", 0, "", ".wav", pattern,
+                          style_tags=["analog", "  ", "wavy"])
+    assert name == "[analog, wavy]_beat.wav"
+
+
+def test_build_producers_single():
+    pattern = [("name", ""), ("producers", "")]
+    name = build_filename("beat", "", 0, "", ".wav", pattern,
+                          producers=["beatsexuell"])
+    assert name == "beat_@beatsexuell.wav"
+
+
+def test_build_producers_multi():
+    pattern = [("name", ""), ("producers", "")]
+    name = build_filename("beat", "", 0, "", ".wav", pattern,
+                          producers=["beatsexuell", "R16Studios"])
+    assert name == "beat_@beatsexuell_@R16Studios.wav"
+
+
+def test_build_producers_empty():
+    pattern = [("name", ""), ("producers", "")]
+    name = build_filename("beat", "", 0, "", ".wav", pattern, producers=[])
+    assert name == "beat.wav"
+
+
+def test_build_bpm_paren():
+    pattern = [("name", ""), ("bpm_paren", "")]
+    name = build_filename("beat", "", 130.0, "", ".wav", pattern)
+    assert name == "beat_(130bpm).wav"
+
+
+def test_build_bpm_paren_empty_when_no_bpm():
+    pattern = [("name", ""), ("bpm_paren", "")]
+    name = build_filename("beat", "", 0, "", ".wav", pattern)
+    assert name == "beat.wav"
+
+
+def test_build_loop_pool_preset():
+    from src.presets import PRESETS
+    pattern = PRESETS["Loop Pool"]
+    name = build_filename("numb", "", 130.0, "", ".mp3", pattern,
+                          style_tags=["analog", "don"],
+                          producers=["beatsexuell", "R16Studios"])
+    assert name == "[analog, don]_numb_130bpm_@beatsexuell_@R16Studios.mp3"
+
+
+def test_build_backward_compat_no_new_params():
+    """Old callers without style_tags/producers still work."""
+    pattern = [("name", ""), ("key", ""), ("bpm_raw", "BPM"), ("tag", "")]
+    name = build_filename("drain", "G#min", 148.0, "BZS", ".wav", pattern)
+    assert name == "drain_G#min_148BPM_BZS.wav"

@@ -36,6 +36,8 @@ def build_filename(
     tag: str,
     ext: str,
     pattern: list[tuple[str, str]],
+    style_tags: list[str] | None = None,
+    producers: list[str] | None = None,
 ) -> str:
     bpm_val = int(bpm) if bpm and bpm == int(bpm) else bpm
 
@@ -46,8 +48,16 @@ def build_filename(
             return (key + suffix) if key else ""
         if token_id in ("bpm", "bpm_raw"):
             return (str(bpm_val) + suffix) if bpm_val else ""
+        if token_id == "bpm_paren":
+            return f"({bpm_val}bpm)" if bpm_val else ""
         if token_id == "tag":
             return (tag + suffix) if tag else ""
+        if token_id == "style_tags":
+            tags = [t.strip() for t in (style_tags or []) if t.strip()]
+            return ("[" + ", ".join(tags) + "]") if tags else ""
+        if token_id == "producers":
+            prods = [p.strip() for p in (producers or []) if p.strip()]
+            return "_".join(f"@{p}" for p in prods) if prods else ""
         return ""
 
     parts = [resolve(tid, sfx) for tid, sfx in pattern]
