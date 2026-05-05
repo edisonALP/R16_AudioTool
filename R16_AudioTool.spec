@@ -1,12 +1,12 @@
 # -*- mode: python ; coding: utf-8 -*-
-
+import sys
 
 a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[],
-    hiddenimports=[],
+    datas=[('assets', 'assets')],
+    hiddenimports=['librosa', 'soundfile', 'scipy', 'numpy', 'mutagen'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -22,7 +22,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name='R16_Metafinder',
+    name='R16_AudioTool',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -36,3 +36,15 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
 )
+
+if sys.platform == 'darwin':
+    app = BUNDLE(
+        exe,
+        name='R16_AudioTool.app',
+        icon=None,
+        bundle_identifier='com.r16.audiotool',
+        info_plist={
+            'NSHighResolutionCapable': True,
+            'CFBundleShortVersionString': '1.0.0',
+        },
+    )
