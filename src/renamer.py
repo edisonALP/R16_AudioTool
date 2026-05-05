@@ -4,7 +4,10 @@ import re
 
 _PAT_TAG = re.compile(r'@(\w+?)(?=[\s@]|$)')
 _PAT_BPM = re.compile(r'(?<![a-zA-Z\d])(\d{2,3})\s*(?:BPM|bpm)(?![a-zA-Z\d])')
+_PAT_BPM_BARE = re.compile(r'(?<![a-zA-Z\d])(\d{2,3})(?![a-zA-Z\d])')
 _PAT_KEY = re.compile(r'\b([A-Ga-g][#b]?(?:maj|min))(?=[\s_\-.]|$)')
+
+_BPM_MIN, _BPM_MAX = 60, 220
 
 
 def parse_filename(stem: str) -> dict:
@@ -21,9 +24,23 @@ def parse_filename(stem: str) -> dict:
     if key:
         key = key[0].upper() + key[1:]
 
+    # If no keyword BPM found, try bare number in BPM range from original stem
+    if bpm is None:
+        for m in _PAT_BPM_BARE.finditer(stem):
+            val = int(m.group(1))
+            if _BPM_MIN <= val <= _BPM_MAX:
+                bpm = float(val)
+                break
+
     clean = stem
     for pat in (_PAT_TAG, _PAT_BPM, _PAT_KEY):
         clean = pat.sub('', clean)
+
+    # Strip bare BPM-range numbers so they don't double up with the detected BPM token
+    def _drop_bpm_number(m: re.Match) -> str:
+        return '' if _BPM_MIN <= int(m.group(1)) <= _BPM_MAX else m.group(0)
+
+    clean = _PAT_BPM_BARE.sub(_drop_bpm_number, clean)
     clean = re.sub(r'[\s_\-]+', ' ', clean).strip(' _-')
 
     return {'tag': tag, 'bpm': bpm, 'key': key, 'clean_name': clean}
