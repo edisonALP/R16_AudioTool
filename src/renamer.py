@@ -29,17 +29,30 @@ def parse_filename(stem: str) -> dict:
     return {'tag': tag, 'bpm': bpm, 'key': key, 'clean_name': clean}
 
 
-def build_filename(stem_name: str, key: str, bpm: float, tag: str, ext: str) -> str:
-    bpm_str = f"{int(bpm)}BPM" if bpm == int(bpm) else f"{bpm}BPM"
-    parts = [stem_name]
-    if key:
-        parts.append(key)
-    if bpm:
-        parts.append(bpm_str)
-    if tag:
-        parts.append(tag)
-    name = '_'.join(parts)
-    # sanitize
+def build_filename(
+    clean_name: str,
+    key: str,
+    bpm: float,
+    tag: str,
+    ext: str,
+    pattern: list[tuple[str, str]],
+) -> str:
+    bpm_val = int(bpm) if bpm and bpm == int(bpm) else bpm
+
+    def resolve(token_id: str, suffix: str) -> str:
+        if token_id == "name":
+            return clean_name or ""
+        if token_id == "key":
+            return (key + suffix) if key else ""
+        if token_id in ("bpm", "bpm_raw"):
+            return (str(bpm_val) + suffix) if bpm_val else ""
+        if token_id == "tag":
+            return (tag + suffix) if tag else ""
+        return ""
+
+    parts = [resolve(tid, sfx) for tid, sfx in pattern]
+    parts = [p for p in parts if p]
+    name = "_".join(parts)
     name = re.sub(r'[<>:"/\\|?*]', '', name)
     return name + ext
 
