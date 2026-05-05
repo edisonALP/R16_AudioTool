@@ -2,9 +2,9 @@ import os
 import re
 
 
-_PAT_TAG = re.compile(r'@(\w+)')
+_PAT_TAG = re.compile(r'@(\w+?)(?=[\s@]|$)')
 _PAT_BPM = re.compile(r'\b(\d{2,3})\s*(?:BPM|bpm)\b')
-_PAT_KEY = re.compile(r'\b([A-Ga-g][#b]?(?:maj|min))\b')
+_PAT_KEY = re.compile(r'\b([A-Ga-g][#b]?(?:maj|min))(?=[\s_\-.]|$)')
 
 
 def parse_filename(stem: str) -> dict:
@@ -16,6 +16,10 @@ def parse_filename(stem: str) -> dict:
     tag = tag_m.group(1) if tag_m else None
     bpm = float(bpm_m.group(1)) if bpm_m else None
     key = key_m.group(1) if key_m else None
+
+    # Normalize key to title case (e.g. D#min, Gmaj)
+    if key:
+        key = key[0].upper() + key[1:]
 
     clean = stem
     for pat in (_PAT_TAG, _PAT_BPM, _PAT_KEY):

@@ -19,7 +19,7 @@ def test_parse_bpm_lowercase():
 
 def test_parse_key_minor():
     r = parse_filename("fiss 140BPM d#min")
-    assert r['key'] == 'd#min'
+    assert r['key'] == 'D#min'
 
 
 def test_parse_key_major():
@@ -48,3 +48,15 @@ def test_parse_multiple_bpm_uses_first():
 def test_build_filename_no_duplicates():
     name = build_filename("drain 120", "G#min", 148.0, "BZS", ".wav")
     assert name == "drain 120_G#min_148BPM_BZS.wav"
+
+
+def test_parse_key_with_trailing_number():
+    r = parse_filename("fiss 140 @beatsexuell d#min_1")
+    assert r['key'] == 'D#min'
+
+
+def test_parse_tag_stops_at_space():
+    r = parse_filename("drain @fred_g 148BPM G#min")
+    assert r['tag'] == 'fred_g'
+    assert r['bpm'] == 148.0
+    assert r['key'] == 'G#min'
