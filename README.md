@@ -1,135 +1,124 @@
-<div align="center">
-  <h1>🎛️ R16 AudioTool</h1>
-  <p><b>The ultimate FL Studio companion tool for producers and beatmakers.</b></p>
-  
-  ![Python](https://img.shields.io/badge/Python-3.8%2B-blue?style=flat-square&logo=python)
-  ![PyQt5](https://img.shields.io/badge/PyQt5-GUI-green?style=flat-square&logo=qt)
-  ![License](https://img.shields.io/badge/License-MIT-orange?style=flat-square)
-</div>
+# R16 AudioTool
+
+**FL Studio companion tool for producers.** Analyzes exported stems, detects Key and BPM, renames files with metadata baked into the filename.
+
+![Python](https://img.shields.io/badge/Python-3.8%2B-blue?style=flat-square&logo=python)
+![PyQt5](https://img.shields.io/badge/PyQt5-GUI-green?style=flat-square&logo=qt)
+![License](https://img.shields.io/badge/License-MIT-orange?style=flat-square)
 
 ---
 
-## 🎵 Overview
-
-**R16 AudioTool** is a lightweight desktop application designed to streamline the workflow of music producers. It automatically analyzes your exported audio stems, detects their **Key** and **BPM**, and renames them by baking the metadata directly into the filename — using any naming format you choose.
+## What it does
 
 **Before:**
-`Melody_Loop.wav`  
-`Drums_Full.wav`
+```
+Melody_Loop.wav
+Drums_Full.wav
+```
 
 **After (Classic):**
-`Melody_Loop_D#min_140BPM_BZS.wav`  
-`Drums_Full_140BPM_BZS.wav`
+```
+Melody_Loop_D#min_140BPM_BZS.wav
+Drums_Full_140BPM_BZS.wav
+```
 
 **After (Splice):**
-`BZS_Melody_Loop_140_D#min.wav`  
-`BZS_Drums_Full_140.wav`
+```
+BZS_Melody_Loop_140_D#min.wav
+BZS_Drums_Full_140.wav
+```
 
 ---
 
-## ✨ Features
+## Features
 
-- 🎹 **Advanced Key Detection:** Krumhansl-Schmuckler algorithm via `chroma_cens` for accurate key detection, robust against complex timbres.
-- 🥁 **Smart BPM Detection:** Tempogram analysis tailored for Trap, Drill, and syncopated beats.
-- 🏷️ **Flexible Naming Patterns:** Choose from built-in platform presets or build a custom token sequence — no typing required.
-- 🎨 **Style Tags:** One-click genre/vibe tags (trap, drill, phonk, ambient…) embed directly into filenames via the `[Tags]` token.
-- 👥 **Multi-Producer Credits:** Add up to 3 producer names — automatically formatted as `@Name1_@Name2` in the filename.
-- 🖱️ **Drag & Drop Workflow:** Drop entire folders or individual stems directly into the app.
-- ✏️ **Editable Metadata:** Review and correct Key, BPM, and Producer Tag before committing changes.
-- 👀 **Live Preview:** Instantly see the new filenames as you adjust settings.
-- 🚀 **Non-Destructive & Safe:** Files only rename after your explicit confirmation.
-- 💻 **Cross-Platform:** Windows, macOS, and Linux.
+- **Key Detection** — Krumhansl-Schmuckler algorithm via `chroma_cens`, accurate on complex timbres
+- **BPM Detection** — Tempogram analysis tuned for Trap, Drill, and syncopated beats
+- **Naming Patterns** — Built-in platform presets or fully custom token order
+- **Style Tags** — One-click genre tags (trap, drill, phonk, ambient…) via `[Tags]` token
+- **Multi-Producer Credits** — Up to 3 names, auto-formatted as `@Name1_@Name2`
+- **Drag & Drop** — Drop folders or single files directly into the app
+- **Editable Metadata** — Correct Key, BPM, or tag before renaming
+- **Live Preview** — See new filenames update in real time
+- **Non-Destructive** — Files only rename after explicit confirmation
+- **Cross-Platform** — Windows and macOS
 
 ---
 
-## 🏷️ Naming Pattern Presets
-
-R16 AudioTool ships with platform-specific presets. Click **▶ Naming Pattern** to expand the bar, then switch presets or build your own by clicking token chips:
+## Naming Presets
 
 | Preset | Format | Example |
 |--------|--------|---------|
-| **Classic** | `name_key_bpmBPM_tag` | `drain_C#min_120BPM_BZS.wav` |
-| **Splice** | `tag_name_bpm_key` | `BZS_drain_120_C#min.wav` |
-| **Looperman** | `name_bpmbpm_key` | `drain_120bpm_C#min.wav` |
-| **Minimal** | `name_key_bpm` | `drain_C#min_120.wav` |
-| **Loop Pool** | `[tags]_name_bpmbpm_@producers` | `[trap, dark]_drain_120bpm_@BZS.wav` |
-| **Custom** | your choice | any order |
+| Classic | `name_key_bpmBPM_tag` | `drain_C#min_120BPM_BZS.wav` |
+| Splice | `tag_name_bpm_key` | `BZS_drain_120_C#min.wav` |
+| Looperman | `name_bpmbpm_key` | `drain_120bpm_C#min.wav` |
+| Minimal | `name_key_bpm` | `drain_C#min_120.wav` |
+| Loop Pool | `[tags]_name_bpmbpm_@producers` | `[trap, dark]_drain_120bpm_@BZS.wav` |
+| Custom | your choice | any order |
 
-Available tokens: `Name` · `Key` · `BPM` · `BPM#` (plain number) · `bpm` (lowercase) · `(BPM)` · `Tag` · `[Tags]` · `@Producers`
+**Available tokens:** `Name` · `Key` · `BPM` · `BPM#` · `bpm` · `(BPM)` · `Tag` · `[Tags]` · `@Producers`
 
 ---
 
-## 🛠️ Supported Formats
+## Supported Formats
+
 `.wav` · `.mp3` · `.flac` · `.aiff` · `.aif` · `.ogg`
 
 ---
 
-## 🚀 Installation
+## Download
 
-### Windows
+Go to [Releases](https://github.com/edisonALP/R16_AudioTool/releases) and download the latest version for your platform.
+
+- **Windows:** `R16_AudioTool.exe`
+- **macOS:** `R16_AudioTool-macOS.zip` → unzip → drag to Applications → right-click → Open (first launch only)
+
+---
+
+## Run from source
+
+**Windows:**
 ```bash
 git clone https://github.com/edisonALP/R16_AudioTool.git
 cd R16_AudioTool
 pip install -r requirements.txt
+python main.py
 ```
 
-### macOS / Linux
+**macOS / Linux:**
 ```bash
 git clone https://github.com/edisonALP/R16_AudioTool.git
 cd R16_AudioTool
 pip3 install -r requirements.txt
+python3 main.py
 ```
 
 ---
 
-## 🎮 Usage
+## Workflow (FL Studio)
 
-```bash
-python main.py
-```
-
-### Recommended Workflow for FL Studio:
-1. **Export Stems:** *File → Export → Wave file → Split mixer tracks*
-2. **Import:** Drag & drop your stem folder into R16 AudioTool
-3. **Choose Pattern:** Click **▶ Naming Pattern** and pick a preset (e.g. Splice)
-4. **Style & Credits:** Click **▶ Style Tags & Producers** — pick genre tags, enter producer name(s)
-5. **Analyze:** Click **"Analyze All"** to detect Key and BPM
-6. **Review:** Double-click any cell to correct values
-7. **Rename:** Click **"Rename All Files"**
+1. Export stems: *File → Export → Wave file → Split mixer tracks*
+2. Drag & drop stem folder into R16 AudioTool
+3. Pick a naming preset under **Naming Pattern**
+4. Set genre tags and producer name(s) under **Style Tags & Producers**
+5. Click **Analyze All**
+6. Correct any values by double-clicking a cell
+7. Click **Rename All Files**
 
 ---
 
-## 📦 Dependencies
+## Dependencies
 
 | Package | Purpose |
 |---------|---------|
-| `PyQt5` | Dark-theme GUI |
-| `librosa` | Audio analysis & Key detection |
+| `PyQt5` | GUI |
+| `librosa` | Audio analysis & key detection |
 | `aubio` | Beat tracking |
-| `numpy` | DSP operations |
+| `numpy` | DSP |
 | `soundfile` | Audio I/O |
 | `scipy` | Signal processing |
 | `mutagen` | Metadata writing |
 
 ---
 
-## 📂 Project Structure
-
-```text
-├── main.py              # Entry point
-├── requirements.txt     # Python dependencies
-└── src/
-    ├── analyzer.py      # BPM + Key detection
-    ├── renamer.py       # Filename building and renaming
-    ├── presets.py       # Naming pattern preset definitions
-    ├── pattern_bar.py   # Collapsible naming pattern UI widget
-    ├── naming_section.py# Style tags + multi-producer credits widget
-    ├── main_window.py   # Main GUI
-    └── styles.py        # Dark theme stylesheet
-```
-
----
-
-<div align="center">
-  <p>Made with ❤️ by <b>R16</b></p>
-</div>
+Made by **R16**
