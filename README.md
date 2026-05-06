@@ -18,14 +18,14 @@ Drums_Full.wav
 
 **After (Classic):**
 ```
-Melody_Loop_D#min_140BPM_BZS.wav
-Drums_Full_140BPM_BZS.wav
+Melody_Loop_D#min_140BPM_beatsexuell.wav
+Drums_Full_140BPM_beatsexuell.wav
 ```
 
 **After (Splice):**
 ```
-BZS_Melody_Loop_140_D#min.wav
-BZS_Drums_Full_140.wav
+beatsexuell_Melody_Loop_140_D#min.wav
+beatsexuell_Drums_Full_140.wav
 ```
 
 ---
@@ -49,11 +49,11 @@ BZS_Drums_Full_140.wav
 
 | Preset | Format | Example |
 |--------|--------|---------|
-| Classic | `name_key_bpmBPM_tag` | `drain_C#min_120BPM_BZS.wav` |
-| Splice | `tag_name_bpm_key` | `BZS_drain_120_C#min.wav` |
+| Classic | `name_key_bpmBPM_tag` | `drain_C#min_120BPM_beatsexuell.wav` |
+| Splice | `tag_name_bpm_key` | `beatsexuell_drain_120_C#min.wav` |
 | Looperman | `name_bpmbpm_key` | `drain_120bpm_C#min.wav` |
 | Minimal | `name_key_bpm` | `drain_C#min_120.wav` |
-| Loop Pool | `[tags]_name_bpmbpm_@producers` | `[trap, dark]_drain_120bpm_@BZS.wav` |
+| Loop Pool | `[tags]_name_bpmbpm_@producers` | `[trap, dark]_drain_120bpm_@beatsexuell.wav` |
 | Custom | your choice | any order |
 
 **Available tokens:** `Name` · `Key` · `BPM` · `BPM#` · `bpm` · `(BPM)` · `Tag` · `[Tags]` · `@Producers`
