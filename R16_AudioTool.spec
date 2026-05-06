@@ -7,7 +7,7 @@ a = Analysis(
     binaries=[],
     datas=[('assets', 'assets')],
     hiddenimports=[
-        'librosa', 'soundfile', 'scipy', 'mutagen',
+        'aubio', 'librosa', 'soundfile', 'scipy', 'mutagen',
         'numpy', 'numpy._core', 'numpy._core._exceptions',
         'numpy._core.multiarray', 'numpy._core._multiarray_umath',
         'numpy._core._multiarray_tests', 'numpy._core.umath',
