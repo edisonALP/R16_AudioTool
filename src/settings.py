@@ -5,6 +5,8 @@ _DEFAULTS: dict = {
     "style_tags": [],
     "custom_tags": [],
     "producers": ["beatsexuell"],
+    "gpu_mode": "auto",
+    "gpu_setup_done": False,
 }
 
 
