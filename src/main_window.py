@@ -25,7 +25,7 @@ COL_PREVIEW = 4
 
 
 class AnalyzeWorker(QThread):
-    progress = pyqtSignal(int, str, float, str)  # row, key, bpm, filename
+    progress = pyqtSignal(int, str, float, str, bool, object)  # row, key, bpm, filename, clipping, lufs
     error    = pyqtSignal(int, str)
     finished = pyqtSignal()
 
@@ -37,7 +37,14 @@ class AnalyzeWorker(QThread):
         for row, path in self.rows:
             try:
                 result = analyze_file(path)
-                self.progress.emit(row, result['key'], result['bpm'], os.path.basename(path))
+                self.progress.emit(
+                    row,
+                    result['key'],
+                    result['bpm'],
+                    os.path.basename(path),
+                    result['clipping'],
+                    result['lufs'],
+                )
             except Exception as e:
                 self.error.emit(row, str(e))
         self.finished.emit()
@@ -192,6 +199,9 @@ class DropZone(QLabel):
         return files
 
 
+_GPU_REQUIRED = {"Stem Separation", "Restoration"}
+
+
 class ToolNav(QWidget):
     """Horizontal tool navigation bar with active + coming-soon tabs."""
 
@@ -202,8 +212,9 @@ class ToolNav(QWidget):
         ("Restoration", False),
     ]
 
-    def __init__(self, parent=None):
+    def __init__(self, gpu_available: bool = False, parent=None):
         super().__init__(parent)
+        self._gpu_available = gpu_available
         self.setFixedHeight(46)
         layout = QHBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
@@ -261,9 +272,17 @@ class ToolNav(QWidget):
         vbox.addWidget(btn)
 
         if not active:
-            soon = QLabel("Coming Soon")
+            if name in _GPU_REQUIRED and not self._gpu_available:
+                badge_text  = "Requires GPU"
+                badge_color = "#cc8800"
+            else:
+                badge_text  = "Coming Soon"
+                badge_color = "#cc0000"
+            soon = QLabel(badge_text)
             soon.setAlignment(Qt.AlignCenter)
-            soon.setStyleSheet("color: #cc0000; font-size: 9px; font-weight: 600; letter-spacing: 0.5px;")
+            soon.setStyleSheet(
+                f"color: {badge_color}; font-size: 9px; font-weight: 600; letter-spacing: 0.5px;"
+            )
             soon.setFixedHeight(12)
             vbox.addWidget(soon)
         else:
@@ -283,7 +302,7 @@ def _load_fonts():
 
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, gpu_available: bool = False):
         super().__init__()
         _load_fonts()
         self.setWindowTitle("R16 AudioTool")
@@ -294,6 +313,7 @@ class MainWindow(QMainWindow):
         self._analyzed = 0
         self._style_tags: list = []
         self._producers: list = []
+        self._gpu_available = gpu_available
         self._build_ui()
 
     def _build_ui(self):
@@ -325,7 +345,7 @@ class MainWindow(QMainWindow):
         layout.addLayout(header)
 
         # ── Tool Nav ─────────────────────────────────────────────────────
-        self.tool_nav = ToolNav()
+        self.tool_nav = ToolNav(gpu_available=self._gpu_available)
         layout.addWidget(self.tool_nav)
 
         # separator line
@@ -547,11 +567,25 @@ class MainWindow(QMainWindow):
         self._worker.finished.connect(self._on_done)
         self._worker.start()
 
-    def _on_result(self, row: int, key: str, bpm: float, fname: str):
+    def _on_result(self, row: int, key: str, bpm: float, fname: str, clipping: bool, lufs):
         self.table.blockSignals(True)
         bpm_str = str(int(bpm)) if bpm == int(bpm) else str(bpm)
         self.table.item(row, COL_KEY).setText(key)
         self.table.item(row, COL_BPM).setText(bpm_str)
+
+        orig_item = self.table.item(row, COL_ORIG)
+        base_name = os.path.basename(self._file_paths.get(row, fname))
+        if lufs is not None:
+            lufs_str = f"{lufs:.1f} LUFS"
+            if clipping:
+                orig_item.setText(f"{base_name}   ⚠  {lufs_str}")
+                orig_item.setForeground(QColor("#ff4444"))
+            else:
+                orig_item.setText(f"{base_name}   {lufs_str}")
+        elif clipping:
+            orig_item.setText(f"{base_name}   ⚠")
+            orig_item.setForeground(QColor("#ff4444"))
+
         self.table.blockSignals(False)
         self._update_preview(row)
 
