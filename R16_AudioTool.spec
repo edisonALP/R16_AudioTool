@@ -1,12 +1,15 @@
 # -*- mode: python ; coding: utf-8 -*-
 import sys
+from PyInstaller.utils.hooks import collect_all, collect_dynamic_libs
+
+aubio_datas, aubio_binaries, aubio_hiddenimports = collect_all('aubio')
 
 a = Analysis(
     ['main.py'],
     pathex=[],
-    binaries=[],
-    datas=[('assets', 'assets')],
-    hiddenimports=[
+    binaries=aubio_binaries + collect_dynamic_libs('aubio'),
+    datas=[('assets', 'assets')] + aubio_datas,
+    hiddenimports=aubio_hiddenimports + [
         'aubio', 'librosa', 'soundfile', 'scipy', 'mutagen',
         'numpy', 'numpy._core', 'numpy._core._exceptions',
         'numpy._core.multiarray', 'numpy._core._multiarray_umath',
