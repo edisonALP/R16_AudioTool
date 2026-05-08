@@ -5,6 +5,12 @@ import tempfile
 import os
 import soundfile as sf
 
+try:
+    import pyloudnorm as pyln
+    _PYLOUDNORM = True
+except ImportError:
+    _PYLOUDNORM = False
+
 NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 
 _MAJOR = np.array([6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88])
@@ -65,6 +71,26 @@ def _to_music_range(bpm: float) -> float:
     while bpm > 180:
         bpm /= 2
     return bpm
+
+
+def detect_clipping(y: np.ndarray) -> bool:
+    return bool(np.max(np.abs(y)) >= 0.999)
+
+
+def detect_lufs(y: np.ndarray, sr: int) -> float | None:
+    if not _PYLOUDNORM:
+        return None
+    min_samples = int(0.4 * sr)
+    if len(y) < min_samples:
+        return None
+    try:
+        meter = pyln.Meter(sr)
+        loudness = meter.integrated_loudness(y.reshape(-1, 1))
+        if not np.isfinite(loudness):
+            return None
+        return round(float(loudness), 1)
+    except Exception:
+        return None
 
 
 def detect_bpm(path: str, y=None, sr=None) -> float:
@@ -151,6 +177,8 @@ def analyze_file(path: str) -> dict:
 
     stem_type   = _classify_stem_type(sub_ratio, onset_rate, centroid)
     description = _build_description(onset_rate, centroid, bpm, key)
+    clipping    = detect_clipping(y)
+    lufs        = detect_lufs(y, sr)
 
     return {
         'key':         key,
@@ -159,4 +187,6 @@ def analyze_file(path: str) -> dict:
         'confidence':  round(confidence, 2),
         'stem_type':   stem_type,
         'description': description,
+        'clipping':    clipping,
+        'lufs':        lufs,
     }

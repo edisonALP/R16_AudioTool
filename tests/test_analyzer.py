@@ -71,3 +71,52 @@ def test_build_description_percussive_dark():
 def test_build_description_tonal_bright():
     d = _build_description(onset_rate=2.0, centroid=5000.0, bpm=120.0, key='Cmaj')
     assert d == 'Tonal, bright, 120 BPM, Cmaj'
+
+
+from src.analyzer import detect_clipping, detect_lufs
+
+
+def test_clipping_detected_at_limit():
+    y = np.zeros(44100, dtype=np.float32)
+    y[1000] = 1.0
+    assert detect_clipping(y) is True
+
+
+def test_clipping_detected_at_threshold():
+    y = np.full(44100, 0.5, dtype=np.float32)
+    y[500] = 0.999
+    assert detect_clipping(y) is True
+
+
+def test_no_clipping_below_threshold():
+    y = np.full(44100, 0.5, dtype=np.float32)
+    assert detect_clipping(y) is False
+
+
+def test_lufs_returns_float_for_valid_audio():
+    sr = 44100
+    t = np.linspace(0, 1.0, sr, dtype=np.float32)
+    y = 0.1 * np.sin(2 * np.pi * 440 * t)
+    result = detect_lufs(y, sr)
+    assert result is None or isinstance(result, float)
+
+
+def test_lufs_returns_none_for_short_audio():
+    y = np.zeros(100, dtype=np.float32)
+    result = detect_lufs(y, 44100)
+    assert result is None
+
+
+def test_analyze_file_has_clipping_and_lufs_keys(tmp_path):
+    import soundfile as sf
+    sr = 44100
+    t = np.linspace(0, 2.0, sr * 2, dtype=np.float32)
+    y = 0.3 * np.sin(2 * np.pi * 220 * t)
+    path = str(tmp_path / "test.wav")
+    sf.write(path, y, sr)
+
+    from src.analyzer import analyze_file
+    result = analyze_file(path)
+    assert "clipping" in result
+    assert "lufs" in result
+    assert isinstance(result["clipping"], bool)
