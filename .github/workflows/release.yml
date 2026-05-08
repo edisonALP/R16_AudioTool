@@ -48,6 +48,8 @@ jobs:
 
       - name: Install dependencies
         run: pip install -r requirements.txt pyinstaller
+        env:
+          CFLAGS: "-Wno-incompatible-function-pointer-types"
 
       - name: Build app
         run: pyinstaller R16_AudioTool.spec
