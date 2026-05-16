@@ -14,6 +14,7 @@ from src.renamer import build_filename, rename_file, parse_filename
 from src.styles import DARK
 from src.pattern_bar import NamingPatternBar
 from src.naming_section import NamingSection
+from src.utils import assets_dir
 
 SUPPORTED = {'.wav', '.mp3', '.flac', '.aiff', '.aif', '.ogg'}
 
@@ -294,9 +295,9 @@ class ToolNav(QWidget):
 
 
 def _load_fonts():
-    assets = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'assets')
+    base = assets_dir()
     for fname in ("Inter-Regular.ttf", "Inter-SemiBold.ttf", "Inter-Bold.ttf"):
-        path = os.path.join(assets, fname)
+        path = os.path.join(base, fname)
         if os.path.exists(path):
             QFontDatabase.addApplicationFont(path)
 
@@ -326,7 +327,7 @@ class MainWindow(QMainWindow):
         # ── Header ──────────────────────────────────────────────────────
         header = QHBoxLayout()
 
-        logo_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'assets', 'logomascott.png')
+        logo_path = os.path.join(assets_dir(), 'logomascott.png')
         if os.path.exists(logo_path):
             from PyQt5.QtWidgets import QApplication
             dpr = QApplication.primaryScreen().devicePixelRatio()

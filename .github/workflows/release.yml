@@ -54,8 +54,11 @@ jobs:
       - name: Build app
         run: pyinstaller R16_AudioTool.spec
 
-      - name: Zip .app
-        run: cd dist && zip -r R16_AudioTool-macOS.zip R16_AudioTool.app
+      - name: Zip macOS binary
+        run: |
+          cp start_mac.command dist/start_mac.command
+          chmod +x dist/R16_AudioTool dist/start_mac.command
+          cd dist && zip R16_AudioTool-macOS.zip R16_AudioTool start_mac.command
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@v4

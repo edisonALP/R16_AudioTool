@@ -4,16 +4,21 @@ import subprocess
 
 def detect_gpu() -> dict:
     try:
-        if platform.system() == "Darwin" and platform.machine() == "arm64":
-            return {
-                "available": True,
-                "backend": "mps",
-                "name": "Apple Silicon",
-                "vram_gb": _detect_apple_silicon_vram(),
-            }
-        nvidia = _detect_nvidia()
-        if nvidia:
-            return nvidia
+        system = platform.system()
+        if system == "Darwin":
+            if platform.machine() == "arm64":
+                return {
+                    "available": True,
+                    "backend": "mps",
+                    "name": "Apple Silicon",
+                    "vram_gb": _detect_apple_silicon_vram(),
+                }
+            # Intel Mac: no MPS, no CUDA
+            return {"available": False, "backend": "none", "name": "Intel Mac", "vram_gb": None}
+        if system == "Windows":
+            nvidia = _detect_nvidia()
+            if nvidia:
+                return nvidia
     except Exception:
         pass
     return {"available": False, "backend": "none", "name": "", "vram_gb": None}

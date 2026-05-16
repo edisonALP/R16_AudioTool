@@ -48,15 +48,3 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
 )
-
-if sys.platform == 'darwin':
-    app = BUNDLE(
-        exe,
-        name='R16_AudioTool.app',
-        icon=None,
-        bundle_identifier='com.r16.audiotool',
-        info_plist={
-            'NSHighResolutionCapable': True,
-            'CFBundleShortVersionString': '1.0.0',
-        },
-    )

@@ -7,7 +7,7 @@ from PyQt5.QtCore import Qt
 class GpuSetupDialog(QDialog):
     def __init__(self, gpu_info: dict, parent=None):
         super().__init__(parent)
-        self.chosen_mode = "auto"
+        self.chosen_mode = "cpu"
         self.setWindowTitle("GPU Setup")
         self.setModal(True)
         self.setMinimumWidth(380)

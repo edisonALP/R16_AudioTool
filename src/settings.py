@@ -1,5 +1,6 @@
 import json
 import os
+import warnings
 
 _DEFAULTS: dict = {
     "style_tags": [],
@@ -11,8 +12,17 @@ _DEFAULTS: dict = {
 
 
 def _path() -> str:
-    app_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    return os.path.join(app_root, "settings.json")
+    if os.name == "nt":
+        base = os.path.join(
+            os.environ.get("APPDATA", os.path.expanduser("~")), "R16AudioTool"
+        )
+    else:
+        # macOS: ~/Library/Application Support/R16AudioTool
+        base = os.path.join(
+            os.path.expanduser("~"), "Library", "Application Support", "R16AudioTool"
+        )
+    os.makedirs(base, exist_ok=True)
+    return os.path.join(base, "settings.json")
 
 
 def load() -> dict:
@@ -25,5 +35,10 @@ def load() -> dict:
 
 
 def save(data: dict) -> None:
-    with open(_path(), "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
+    try:
+        path = _path()
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+    except OSError as exc:
+        warnings.warn(f"Settings could not be saved: {exc}")

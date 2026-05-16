@@ -20,10 +20,11 @@ def main():
 
     if not s.get("gpu_setup_done"):
         dlg = GpuSetupDialog(gpu_info)
-        dlg.exec_()
-        s["gpu_mode"] = dlg.chosen_mode
-        s["gpu_setup_done"] = True
-        settings.save(s)
+        if dlg.exec_() == GpuSetupDialog.Accepted:
+            s["gpu_mode"] = dlg.chosen_mode
+            s["gpu_setup_done"] = True
+            settings.save(s)
+        # Rejected: leave gpu_setup_done=False → dialog shows again next launch
 
     gpu_available = (
         s.get("gpu_mode") != "cpu"
